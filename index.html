@@ -69,13 +69,18 @@
 <script>
     const API_URL = "https://media-api-sarah2026.azurewebsites.net/api/GetVideos";
 
+    // Configuration MSAL optimisée pour éviter "unauthorized_client"
     const msalConfig = {
         auth: {
-            clientId: "5b9eef7e-918e-4c84-970c-5be042939c38", // TON BON ID CLIENT
-            authority: "https://login.microsoftonline.com/common",
-            redirectUri: "https://sarah202411.github.io/Application-video-zero-code/"
+            clientId: "5b9eef7e-918e-4c84-970c-5be042939c38", 
+            authority: "https://login.microsoftonline.com/common", 
+            redirectUri: "https://sarah202411.github.io/Application-video-zero-code/",
+            navigateToLoginRequestUrl: true
         },
-        cache: { cacheLocation: "localStorage", storeAuthStateInCookie: true }
+        cache: {
+            cacheLocation: "localStorage",
+            storeAuthStateInCookie: true
+        }
     };
 
     const msalInstance = new msal.PublicClientApplication(msalConfig);
@@ -84,24 +89,33 @@
     async function initAuth() {
         try {
             await msalInstance.initialize();
+            
+            // On vérifie si on revient d'une redirection de connexion
             const response = await msalInstance.handleRedirectPromise();
             
             if (response) {
                 msalInstance.setActiveAccount(response.account);
             }
 
-            const account = msalInstance.getActiveAccount() || msalInstance.getAllAccounts()[0];
-            if (account) {
-                msalInstance.setActiveAccount(account);
-                showApp(account);
+            // On vérifie si un compte est déjà actif dans le cache
+            const currentAccounts = msalInstance.getAllAccounts();
+            if (currentAccounts.length > 0) {
+                msalInstance.setActiveAccount(currentAccounts[0]);
+                showApp(currentAccounts[0]);
             }
         } catch (error) {
-            console.error("Erreur Auth:", error);
+            console.error("Erreur d'initialisation MSAL:", error);
         }
     }
 
     async function login() {
-        await msalInstance.loginRedirect({ scopes: ["openid", "profile", "User.Read"] });
+        try {
+            await msalInstance.loginRedirect({
+                scopes: ["openid", "profile", "User.Read"]
+            });
+        } catch (err) {
+            console.error(err);
+        }
     }
 
     async function logout() {
@@ -122,10 +136,12 @@
     }
 
     async function loadVideos() {
+        const statusText = document.getElementById('status-text');
         try {
             const response = await fetch(API_URL);
-            if (!response.ok) throw new Error("Erreur API");
+            if (!response.ok) throw new Error("Erreur serveur");
             const data = await response.json();
+            
             allVideos = data.map(v => {
                 let cat = "Général";
                 const title = (v.title || "").toLowerCase();
@@ -134,11 +150,13 @@
                 if (title.includes("nature") || title.includes("video3")) cat = "Nature";
                 return { ...v, category: cat };
             });
+
             filtrerEtAfficher();
             document.getElementById('status-dot').classList.add('active');
-            document.getElementById('status-text').innerText = allVideos.length + " vidéos chargées";
+            statusText.innerText = allVideos.length + " vidéos chargées";
         } catch (e) {
-            document.getElementById('status-text').innerText = "Erreur de connexion API (Vérifiez CORS)";
+            statusText.innerText = "L'API ne répond pas. Vérifiez la configuration CORS sur Azure.";
+            console.error(e);
         }
     }
 
@@ -161,13 +179,14 @@
                 <div class="card-content">
                     <div class="card-genre">${v.category}</div>
                     <div class="card-title">${v.title}</div>
-                    <p style="font-size: 0.9rem; color: #aaa;">Source : Azure Storage</p>
+                    <p style="font-size: 0.8rem; color: #888;">Accès sécurisé Azure</p>
                 </div>
             </div>
         `).join('');
-        if (liste.length === 0) grid.innerHTML = "<p>Aucune vidéo trouvée dans la base.</p>";
+        if (liste.length === 0) grid.innerHTML = "<p>Aucune vidéo trouvée.</p>";
     }
 
+    // Lancer l'initialisation au chargement
     initAuth();
 </script>
 </body>
