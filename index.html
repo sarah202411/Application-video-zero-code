@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StreamAzure — Plateforme MediaOnDemand</title>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;700&display=swap" rel="stylesheet">
+    <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
     <style>
         :root { --red: #e50914; --black: #0a0a0a; --card: #1c1c1c; --text: #e5e5e5; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -25,55 +26,109 @@
         .status { padding: 15px 4vw; font-size: 0.85rem; display: flex; align-items: center; gap: 12px; color: #888; }
         .dot { width: 10px; height: 10px; border-radius: 50%; background: #444; }
         .dot.active { background: #2ecc71; box-shadow: 0 0 10px #2ecc71; }
+        #login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; gap: 20px; }
+        #login-screen h2 { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: var(--red); }
+        #main-content { display: none; }
     </style>
 </head>
 <body>
 
 <nav>
     <a href="#" class="logo">STREAM<span>AZURE</span></a>
-    <button class="auth-btn">Connexion Microsoft SSO</button>
+    <button class="auth-btn" id="auth-btn" onclick="toggleAuth()">Connexion Microsoft SSO</button>
 </nav>
 
-<div class="hero-section">
-    <h1>Catalogue Vidéo <span style="color: var(--red);">Cloud</span></h1>
-    <div class="controls">
-        <input type="text" id="search-input" placeholder="🔍 Rechercher..." oninput="filtrerEtAfficher()">
-        <select id="genre-select" class="filter-select" onchange="filtrerEtAfficher()">
-            <option value="all">Toutes les catégories</option>
-            <option value="Animation">Animation</option>
-            <option value="Sci-Fi">Science-Fiction</option>
-            <option value="Nature">Nature</option>
-        </select>
+<!-- Écran de connexion -->
+<div id="login-screen">
+    <h2>Bienvenue sur StreamAzure</h2>
+    <p>Connectez-vous avec votre compte Microsoft pour accéder au catalogue.</p>
+    <button class="auth-btn" onclick="login()">Se connecter avec Microsoft</button>
+</div>
+
+<!-- Contenu principal (caché jusqu'à connexion) -->
+<div id="main-content">
+    <div class="hero-section">
+        <h1>Catalogue Vidéo <span style="color: var(--red);">Cloud</span></h1>
+        <div class="controls">
+            <input type="text" id="search-input" placeholder="🔍 Rechercher..." oninput="filtrerEtAfficher()">
+            <select id="genre-select" class="filter-select" onchange="filtrerEtAfficher()">
+                <option value="all">Toutes les catégories</option>
+                <option value="Animation">Animation</option>
+                <option value="Sci-Fi">Science-Fiction</option>
+                <option value="Nature">Nature</option>
+            </select>
+        </div>
     </div>
-</div>
 
-<div class="status">
-    <div id="status-dot" class="dot"></div>
-    <span id="status-text">Initialisation...</span>
-</div>
+    <div class="status">
+        <div id="status-dot" class="dot"></div>
+        <span id="status-text">Initialisation...</span>
+    </div>
 
-<div class="grid" id="video-grid"></div>
+    <div class="grid" id="video-grid"></div>
+</div>
 
 <script>
-    // On sépare l'URL de la clé pour contourner la sécurité GitHub
     const API_URL = "https://media-api-sarah2026.azurewebsites.net/api/GetVideos";
-    let allVideos = []; 
 
-    async function init() {
+    // Configuration MSAL
+    const msalConfig = {
+        auth: {
+            clientId: "997eba81-1ad6-4b8b-bd45-a9fd21efbbd3",
+            authority: "https://login.microsoftonline.com/common",
+            redirectUri: "https://sarah202411.github.io/Application-video-zero-code/"
+        }
+    };
+
+    const msalInstance = new msal.PublicClientApplication(msalConfig);
+    let allVideos = [];
+
+    async function initAuth() {
+        await msalInstance.initialize();
+        const response = await msalInstance.handleRedirectPromise();
+        if (response) {
+            msalInstance.setActiveAccount(response.account);
+        }
+        const account = msalInstance.getActiveAccount() || msalInstance.getAllAccounts()[0];
+        if (account) {
+            msalInstance.setActiveAccount(account);
+            showApp(account);
+        }
+    }
+
+    async function login() {
+        await msalInstance.loginRedirect({ scopes: ["openid", "profile"] });
+    }
+
+    async function logout() {
+        await msalInstance.logoutRedirect();
+    }
+
+    function toggleAuth() {
+        const account = msalInstance.getActiveAccount();
+        if (account) logout();
+        else login();
+    }
+
+    function showApp(account) {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('main-content').style.display = 'block';
+        document.getElementById('auth-btn').innerText = `Déconnexion (${account.name || account.username})`;
+        loadVideos();
+    }
+
+    async function loadVideos() {
         try {
-            const response = await fetch(API_URL, { credentials: 'include' });
+            const response = await fetch(API_URL);
             const data = await response.json();
-            
-            // CORRECTIF DE FILTRAGE : On force l'attribution des catégories car elles manquent dans CosmosDB
             allVideos = data.map(v => {
                 let cat = "Général";
                 const title = v.title.toLowerCase();
                 if (title.includes("bunny")) cat = "Animation";
                 if (title.includes("éléphants") || title.includes("elephants") || title.includes("video2")) cat = "Sci-Fi";
                 if (title.includes("nature") || title.includes("video3")) cat = "Nature";
-                return { ...v, category: cat }; // On ajoute le champ category manquant
+                return { ...v, category: cat };
             });
-
             filtrerEtAfficher();
             document.getElementById('status-dot').classList.add('active');
             document.getElementById('status-text').innerText = allVideos.length + " vidéos chargées";
@@ -85,13 +140,11 @@
     function filtrerEtAfficher() {
         const query = document.getElementById('search-input').value.toLowerCase().trim();
         const selectedGenre = document.getElementById('genre-select').value;
-        
         const resultats = allVideos.filter(v => {
             const matchGenre = (selectedGenre === 'all') || (v.category === selectedGenre);
             const matchTexte = v.title.toLowerCase().includes(query);
             return matchGenre && matchTexte;
         });
-
         render(resultats);
     }
 
@@ -107,10 +160,10 @@
                 </div>
             </div>
         `).join('');
-        if(liste.length === 0) grid.innerHTML = "<p>Aucun résultat trouvé.</p>";
+        if (liste.length === 0) grid.innerHTML = "<p>Aucun résultat trouvé.</p>";
     }
 
-    init();
+    initAuth();
 </script>
 </body>
 </html>
