@@ -38,14 +38,12 @@
     <button class="auth-btn" id="auth-btn" onclick="toggleAuth()">Connexion Microsoft SSO</button>
 </nav>
 
-<!-- Écran de connexion -->
 <div id="login-screen">
     <h2>Bienvenue sur StreamAzure</h2>
     <p>Connectez-vous avec votre compte Microsoft pour accéder au catalogue.</p>
     <button class="auth-btn" onclick="login()">Se connecter avec Microsoft</button>
 </div>
 
-<!-- Contenu principal (caché jusqu'à connexion) -->
 <div id="main-content">
     <div class="hero-section">
         <h1>Catalogue Vidéo <span style="color: var(--red);">Cloud</span></h1>
@@ -71,33 +69,39 @@
 <script>
     const API_URL = "https://media-api-sarah2026.azurewebsites.net/api/GetVideos";
 
-    // Configuration MSAL
     const msalConfig = {
         auth: {
-            clientId: "997eba81-1ad6-4b8b-bd45-a9fd21efbbd3",
+            clientId: "5b9eef7e-918e-4c84-970c-5be042939c38", // TON BON ID CLIENT
             authority: "https://login.microsoftonline.com/common",
             redirectUri: "https://sarah202411.github.io/Application-video-zero-code/"
-        }
+        },
+        cache: { cacheLocation: "localStorage", storeAuthStateInCookie: true }
     };
 
     const msalInstance = new msal.PublicClientApplication(msalConfig);
     let allVideos = [];
 
     async function initAuth() {
-        await msalInstance.initialize();
-        const response = await msalInstance.handleRedirectPromise();
-        if (response) {
-            msalInstance.setActiveAccount(response.account);
-        }
-        const account = msalInstance.getActiveAccount() || msalInstance.getAllAccounts()[0];
-        if (account) {
-            msalInstance.setActiveAccount(account);
-            showApp(account);
+        try {
+            await msalInstance.initialize();
+            const response = await msalInstance.handleRedirectPromise();
+            
+            if (response) {
+                msalInstance.setActiveAccount(response.account);
+            }
+
+            const account = msalInstance.getActiveAccount() || msalInstance.getAllAccounts()[0];
+            if (account) {
+                msalInstance.setActiveAccount(account);
+                showApp(account);
+            }
+        } catch (error) {
+            console.error("Erreur Auth:", error);
         }
     }
 
     async function login() {
-        await msalInstance.loginRedirect({ scopes: ["openid", "profile"] });
+        await msalInstance.loginRedirect({ scopes: ["openid", "profile", "User.Read"] });
     }
 
     async function logout() {
@@ -120,12 +124,13 @@
     async function loadVideos() {
         try {
             const response = await fetch(API_URL);
+            if (!response.ok) throw new Error("Erreur API");
             const data = await response.json();
             allVideos = data.map(v => {
                 let cat = "Général";
-                const title = v.title.toLowerCase();
+                const title = (v.title || "").toLowerCase();
                 if (title.includes("bunny")) cat = "Animation";
-                if (title.includes("éléphants") || title.includes("elephants") || title.includes("video2")) cat = "Sci-Fi";
+                if (title.includes("elephants") || title.includes("video2")) cat = "Sci-Fi";
                 if (title.includes("nature") || title.includes("video3")) cat = "Nature";
                 return { ...v, category: cat };
             });
@@ -133,7 +138,7 @@
             document.getElementById('status-dot').classList.add('active');
             document.getElementById('status-text').innerText = allVideos.length + " vidéos chargées";
         } catch (e) {
-            document.getElementById('status-text').innerText = "Erreur de connexion API";
+            document.getElementById('status-text').innerText = "Erreur de connexion API (Vérifiez CORS)";
         }
     }
 
@@ -142,7 +147,7 @@
         const selectedGenre = document.getElementById('genre-select').value;
         const resultats = allVideos.filter(v => {
             const matchGenre = (selectedGenre === 'all') || (v.category === selectedGenre);
-            const matchTexte = v.title.toLowerCase().includes(query);
+            const matchTexte = (v.title || "").toLowerCase().includes(query);
             return matchGenre && matchTexte;
         });
         render(resultats);
@@ -156,11 +161,11 @@
                 <div class="card-content">
                     <div class="card-genre">${v.category}</div>
                     <div class="card-title">${v.title}</div>
-                    <div class="card-text">${v.description || 'Source : Azure Media Services'}</div>
+                    <p style="font-size: 0.9rem; color: #aaa;">Source : Azure Storage</p>
                 </div>
             </div>
         `).join('');
-        if (liste.length === 0) grid.innerHTML = "<p>Aucun résultat trouvé.</p>";
+        if (liste.length === 0) grid.innerHTML = "<p>Aucune vidéo trouvée dans la base.</p>";
     }
 
     initAuth();
