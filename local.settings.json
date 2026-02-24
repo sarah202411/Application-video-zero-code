@@ -1,0 +1,11 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "COSMOS_DB_CONNECTION": "AccountEndpoint=https://media-db-sarah2026.documents.azure.com:443/;AccountKey=lEVOR2YJd6FK7t0znK9ReVzsUeax3UZ4XEQ22IyMUE1ocUAjohsARN47yZeWMyuHAtIMTR3L820jACDb4Di3Gg==;",
+    "STORAGE_CONNECTION": "DefaultEndpointsProtocol=https;AccountName=sarahmedia2026;AccountKey=XZso3L6ql3k518ZkHgYh+uitPtmVYhGQAHaM//fSlKkyEhhEON6+dlNXlmo4o1rLUj1GUEj63XzB+AStAzN0og==;EndpointSuffix=core.windows.net",
+    "SEARCH_ENDPOINT": "https://media-search-sarah2026.search.windows.net",
+    "SEARCH_KEY": "XZso3L6ql3k518ZkHgYh+uitPtmVYhGQAHaM//fSlKkyEhhEON6+dlNXlmo4o1rLUj1GUEj63XzB+AStAzN0og=="
+  }
+}
