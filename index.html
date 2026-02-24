@@ -56,12 +56,8 @@
 
 <script>
     // On sépare l'URL de la clé pour contourner la sécurité GitHub
-    const BASE_URL = "https://media-api-sarah2026-gthqfhd5ggdngnaa.swedencentral-01.azurewebsites.net/api/GetVideos";
-    const PART1 = "rw1LwyTdgXCyXmE0reha0mQE4";
-    const PART2 = "jHN3mEbw40w5YqVqduvAzFuX6STJw==";
 
-// On reforme l'URL complète
-    const API_URL = BASE_URL + "?code=" + PART1 + "jHN3mEbw40w5YqVqduvAzFuX6STJw==";
+    const API_URL = "https://media-api-sarah2026-gthqfhd5ggdngnaa.swedencentral-01.azurewebsites.net/api/GetVideos?code=rw1LwyTdgXCyXmE0reha0mQE4jHN3mEbw40w5YqVqduvAzFuX6STJw==";
     let allVideos = []; 
 
     async function init() {
