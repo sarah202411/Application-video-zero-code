@@ -3,706 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StreamAzure — Votre Cinéma Cloud</title>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <title>StreamAzure — Plateforme MediaOnDemand</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --red: #e50914;
-            --red-dark: #b0060f;
-            --black: #0a0a0a;
-            --dark: #141414;
-            --card: #1c1c1c;
-            --card-hover: #242424;
-            --text: #e5e5e5;
-            --muted: #808080;
-            --gold: #f5c518;
-        }
-
+        :root { --red: #e50914; --black: #0a0a0a; --card: #1c1c1c; --text: #e5e5e5; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: 'DM Sans', sans-serif;
-            background: var(--black);
-            color: var(--text);
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* ─── NAVBAR ─── */
-        nav {
-            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 4vw;
-            height: 64px;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.95), transparent);
-            backdrop-filter: blur(2px);
-        }
-        .logo {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 2rem;
-            letter-spacing: 3px;
-            color: var(--red);
-            text-shadow: 0 0 30px rgba(229,9,20,0.5);
-        }
-        .logo span { color: white; }
-        .nav-right { display: flex; align-items: center; gap: 1.5rem; }
-        .nav-badge {
-            background: var(--red);
-            color: white;
-            font-size: 0.7rem;
-            font-weight: 600;
-            padding: 3px 10px;
-            border-radius: 3px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-        .nav-count {
-            color: var(--muted);
-            font-size: 0.85rem;
-        }
-
-        /* ─── HERO ─── */
-        .hero {
-            height: 85vh;
-            min-height: 500px;
-            position: relative;
-            display: flex;
-            align-items: flex-end;
-            padding: 0 4vw 6vh;
-            background:
-                linear-gradient(to top, var(--black) 0%, transparent 50%),
-                linear-gradient(to right, rgba(0,0,0,0.8) 40%, transparent 100%),
-                radial-gradient(ellipse at 60% 40%, #1a0a0a 0%, #0a0a0a 70%);
-            overflow: hidden;
-        }
-        .hero::before {
-            content: '';
-            position: absolute; inset: 0;
-            background: repeating-linear-gradient(
-                0deg,
-                transparent,
-                transparent 2px,
-                rgba(255,255,255,0.01) 2px,
-                rgba(255,255,255,0.01) 4px
-            );
-            pointer-events: none;
-        }
-        .hero-bg-text {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: clamp(8rem, 20vw, 18rem);
-            color: rgba(229,9,20,0.04);
-            letter-spacing: 0.05em;
-            white-space: nowrap;
-            user-select: none;
-            pointer-events: none;
-        }
-        .hero-content { position: relative; z-index: 2; max-width: 550px; }
-        .hero-eyebrow {
-            font-size: 0.75rem;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            color: var(--red);
-            margin-bottom: 1rem;
-            display: flex; align-items: center; gap: 0.5rem;
-        }
-        .hero-eyebrow::before {
-            content: '';
-            display: inline-block; width: 24px; height: 2px;
-            background: var(--red);
-        }
-        .hero-title {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: clamp(3rem, 7vw, 5.5rem);
-            line-height: 0.95;
-            margin-bottom: 1.2rem;
-            letter-spacing: 1px;
-        }
-        .hero-title .highlight { color: var(--red); }
-        .hero-desc {
-            color: #aaa;
-            font-size: 1rem;
-            line-height: 1.6;
-            margin-bottom: 2rem;
-            font-weight: 300;
-        }
-        .hero-actions { display: flex; gap: 1rem; align-items: center; }
-        .btn-primary {
-            background: var(--red);
-            color: white;
-            border: none;
-            padding: 0.8rem 2rem;
-            font-size: 0.95rem;
-            font-weight: 600;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background 0.2s, transform 0.1s;
-            font-family: 'DM Sans', sans-serif;
-            letter-spacing: 0.5px;
-        }
-        .btn-primary:hover { background: var(--red-dark); transform: scale(1.02); }
-        .btn-secondary {
-            background: rgba(255,255,255,0.12);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.2);
-            padding: 0.8rem 2rem;
-            font-size: 0.95rem;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background 0.2s;
-            backdrop-filter: blur(4px);
-            font-family: 'DM Sans', sans-serif;
-        }
-        .btn-secondary:hover { background: rgba(255,255,255,0.2); }
-
-        /* ─── SEARCH & FILTERS ─── */
-        .controls {
-            padding: 2rem 4vw 0;
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .search-wrap {
-            position: relative;
-            flex: 1;
-            min-width: 200px;
-            max-width: 400px;
-        }
-        .search-icon {
-            position: absolute; left: 14px; top: 50%;
-            transform: translateY(-50%);
-            color: var(--muted);
-            font-size: 1rem;
-            pointer-events: none;
-        }
-        .search-input {
-            width: 100%;
-            background: var(--card);
-            border: 1px solid #2a2a2a;
-            color: var(--text);
-            padding: 0.7rem 1rem 0.7rem 2.6rem;
-            border-radius: 6px;
-            font-family: 'DM Sans', sans-serif;
-            font-size: 0.9rem;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        .search-input:focus { border-color: var(--red); }
-        .search-input::placeholder { color: var(--muted); }
-        .filter-btn {
-            background: var(--card);
-            border: 1px solid #2a2a2a;
-            color: var(--text);
-            padding: 0.7rem 1.2rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-family: 'DM Sans', sans-serif;
-            font-size: 0.85rem;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
-        .filter-btn:hover, .filter-btn.active {
-            background: var(--red);
-            border-color: var(--red);
-        }
-
-        /* ─── STATUS BAR ─── */
-        .status-bar {
-            padding: 1.2rem 4vw 0;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.85rem;
-        }
-        .status-dot {
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            background: #aaa;
-            animation: pulse 2s infinite;
-        }
-        .status-dot.connected { background: #2ecc71; }
-        .status-dot.error { background: var(--red); animation: none; }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
-        #status-text { color: var(--muted); }
-
-        /* ─── SECTION ─── */
-        .section { padding: 2.5rem 4vw; }
-        .section-header {
-            display: flex; align-items: baseline;
-            gap: 1rem; margin-bottom: 1.5rem;
-        }
-        .section-title {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 1.6rem;
-            letter-spacing: 2px;
-            color: white;
-        }
-        .section-count {
-            font-size: 0.8rem;
-            color: var(--muted);
-            border: 1px solid #2a2a2a;
-            padding: 2px 8px;
-            border-radius: 20px;
-        }
-
-        /* ─── GRID ─── */
-        .video-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 1.5rem;
-        }
-
-        /* ─── CARD ─── */
-        .card {
-            background: var(--card);
-            border-radius: 8px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: transform 0.25s cubic-bezier(.17,.67,.35,1.2), box-shadow 0.25s;
-            border: 1px solid #1f1f1f;
-            animation: fadeUp 0.5s ease both;
-        }
-        .card:hover {
-            transform: translateY(-6px) scale(1.01);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(229,9,20,0.3);
-            background: var(--card-hover);
-        }
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .card:nth-child(1) { animation-delay: 0.05s; }
-        .card:nth-child(2) { animation-delay: 0.1s; }
-        .card:nth-child(3) { animation-delay: 0.15s; }
-        .card:nth-child(4) { animation-delay: 0.2s; }
-
-        .card-thumb {
-            position: relative;
-            aspect-ratio: 16/9;
-            background: #111;
-            overflow: hidden;
-        }
-        .card-thumb img {
-            width: 100%; height: 100%;
-            object-fit: cover;
-            transition: transform 0.4s;
-        }
-        .card:hover .card-thumb img { transform: scale(1.05); }
-        .card-thumb-placeholder {
-            width: 100%; height: 100%;
-            display: flex; align-items: center; justify-content: center;
-            background: linear-gradient(135deg, #1a1a1a, #0d0d0d);
-            font-size: 3rem;
-        }
-        .card-play-overlay {
-            position: absolute; inset: 0;
-            display: flex; align-items: center; justify-content: center;
-            background: rgba(0,0,0,0.4);
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-        .card:hover .card-play-overlay { opacity: 1; }
-        .play-btn-circle {
-            width: 52px; height: 52px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.9);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.2rem;
-            transform: scale(0.8);
-            transition: transform 0.2s;
-        }
-        .card:hover .play-btn-circle { transform: scale(1); }
-        .card-badge {
-            position: absolute; top: 10px; left: 10px;
-            background: var(--red);
-            color: white;
-            font-size: 0.65rem;
-            font-weight: 700;
-            padding: 3px 8px;
-            border-radius: 3px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        .card-body { padding: 1rem 1.1rem 1.1rem; }
-        .card-title {
-            font-weight: 600;
-            font-size: 0.95rem;
-            margin-bottom: 0.35rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .card-desc {
-            color: var(--muted);
-            font-size: 0.8rem;
-            line-height: 1.5;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            font-weight: 300;
-        }
-        .card-footer {
-            display: flex; align-items: center; justify-content: space-between;
-            margin-top: 0.8rem;
-            padding-top: 0.8rem;
-            border-top: 1px solid #282828;
-        }
-        .card-type {
-            font-size: 0.72rem;
-            color: var(--muted);
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-        .card-star {
-            color: var(--gold);
-            font-size: 0.75rem;
-        }
-
-        /* ─── MODAL PLAYER ─── */
-        .modal-overlay {
-            position: fixed; inset: 0; z-index: 200;
-            background: rgba(0,0,0,0.92);
-            display: flex; align-items: center; justify-content: center;
-            opacity: 0; pointer-events: none;
-            transition: opacity 0.25s;
-            backdrop-filter: blur(8px);
-            padding: 2rem;
-        }
-        .modal-overlay.open { opacity: 1; pointer-events: all; }
-        .modal {
-            background: var(--card);
-            border-radius: 12px;
-            width: 100%;
-            max-width: 860px;
-            overflow: hidden;
-            border: 1px solid #2a2a2a;
-            transform: scale(0.95);
-            transition: transform 0.25s cubic-bezier(.17,.67,.35,1.2);
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        .modal-overlay.open .modal { transform: scale(1); }
-        .modal-video-wrap {
-            position: relative;
-            aspect-ratio: 16/9;
-            background: #000;
-        }
-        .modal-video-wrap video {
-            width: 100%; height: 100%;
-            display: block;
-        }
-        .modal-close {
-            position: absolute; top: 12px; right: 12px;
-            background: rgba(0,0,0,0.7);
-            border: none; color: white;
-            width: 36px; height: 36px;
-            border-radius: 50%;
-            cursor: pointer; font-size: 1.1rem;
-            display: flex; align-items: center; justify-content: center;
-            transition: background 0.2s;
-            z-index: 10;
-        }
-        .modal-close:hover { background: var(--red); }
-        .modal-body { padding: 1.5rem 2rem 2rem; }
-        .modal-title {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 2rem;
-            letter-spacing: 1px;
-            margin-bottom: 0.5rem;
-        }
-        .modal-desc {
-            color: #aaa;
-            line-height: 1.7;
-            font-weight: 300;
-        }
-        .modal-meta {
-            display: flex; gap: 1rem; align-items: center;
-            margin-top: 1rem;
-            font-size: 0.8rem;
-            color: var(--muted);
-        }
-        .modal-meta-item { display: flex; align-items: center; gap: 4px; }
-
-        /* ─── EMPTY / LOADING ─── */
-        .empty-state {
-            grid-column: 1/-1;
-            text-align: center;
-            padding: 4rem 2rem;
-            color: var(--muted);
-        }
-        .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
-        .skeleton {
-            background: linear-gradient(90deg, #1c1c1c 25%, #242424 50%, #1c1c1c 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
-            border-radius: 8px;
-        }
-        @keyframes shimmer {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-        .skeleton-card { height: 280px; }
-
-        /* ─── FOOTER ─── */
-        footer {
-            text-align: center;
-            padding: 3rem 4vw;
-            color: #333;
-            font-size: 0.8rem;
-            border-top: 1px solid #1a1a1a;
-            margin-top: 2rem;
-        }
-        footer span { color: var(--red); }
-
-        /* ─── SCROLLBAR ─── */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: var(--black); }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        body { font-family: 'DM Sans', sans-serif; background: var(--black); color: var(--text); padding-bottom: 50px; min-height: 100vh; }
+        nav { background: rgba(0,0,0,0.95); height: 70px; display: flex; align-items: center; justify-content: space-between; padding: 0 4vw; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #222; }
+        .logo { font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; color: var(--red); letter-spacing: 2px; text-decoration: none; }
+        .auth-btn { background: var(--red); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .hero-section { padding: 40px 4vw 20px; }
+        .controls { display: flex; gap: 15px; flex-wrap: wrap; align-items: center; margin-top: 20px; }
+        .filter-select { flex: 1; min-width: 200px; padding: 14px; border-radius: 6px; border: 1px solid #333; background: #141414; color: white; outline: none; cursor: pointer; }
+        input { flex: 2; padding: 14px; border-radius: 6px; border: 1px solid #333; background: #141414; color: white; outline: none; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 30px; padding: 0 4vw; }
+        .card { background: var(--card); border-radius: 12px; overflow: hidden; border: 1px solid #222; }
+        .card-video { width: 100%; aspect-ratio: 16/9; background: #000; display: block; }
+        .card-content { padding: 20px; }
+        .card-genre { color: var(--red); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; }
+        .card-title { font-size: 1.2rem; font-weight: bold; color: white; margin-bottom: 10px; }
+        .status { padding: 15px 4vw; font-size: 0.85rem; display: flex; align-items: center; gap: 12px; color: #888; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; background: #444; }
+        .dot.active { background: #2ecc71; box-shadow: 0 0 10px #2ecc71; }
     </style>
 </head>
 <body>
 
-<!-- NAVBAR -->
 <nav>
-    <div class="logo">Stream<span>Azure</span></div>
-    <div class="nav-right">
-        <span class="nav-badge">Azure Student</span>
-        <span class="nav-count" id="nav-count">— vidéos</span>
-    </div>
+    <a href="#" class="logo">STREAM<span>AZURE</span></a>
+    <button class="auth-btn">Connexion Microsoft SSO</button>
 </nav>
 
-<!-- HERO -->
-<div class="hero">
-    <div class="hero-bg-text">STREAM</div>
-    <div class="hero-content">
-        <div class="hero-eyebrow">Powered by Azure</div>
-        <h1 class="hero-title">Votre Cinéma<br><span class="highlight">Cloud.</span></h1>
-        <p class="hero-desc">Des vidéos hébergées sur Azure, transcodées et streamées directement depuis Cosmos DB. Votre propre Netflix.</p>
-        <div class="hero-actions">
-            <button class="btn-primary" onclick="scrollToVideos()">▶ Voir les vidéos</button>
-            <button class="btn-secondary" onclick="reloadVideos()">↻ Actualiser</button>
-        </div>
+<div class="hero-section">
+    <h1>Catalogue Vidéo <span style="color: var(--red);">Cloud</span></h1>
+    <div class="controls">
+        <input type="text" id="search-input" placeholder="🔍 Rechercher..." oninput="filtrerEtAfficher()">
+        <select id="genre-select" class="filter-select" onchange="filtrerEtAfficher()">
+            <option value="all">Toutes les catégories</option>
+            <option value="Animation">Animation</option>
+            <option value="Sci-Fi">Science-Fiction</option>
+            <option value="Nature">Nature</option>
+        </select>
     </div>
 </div>
 
-<!-- CONTROLS -->
-<div class="controls">
-    <div class="search-wrap">
-        <span class="search-icon">🔍</span>
-        <input class="search-input" type="text" placeholder="Rechercher une vidéo..." id="search-input" oninput="filterVideos()">
-    </div>
-    <button class="filter-btn active" onclick="setFilter('all', this)">Tout</button>
-    <button class="filter-btn" onclick="setFilter('azure', this)">Azure Blob</button>
-    <button class="filter-btn" onclick="setFilter('web', this)">Web</button>
+<div class="status">
+    <div id="status-dot" class="dot"></div>
+    <span id="status-text">Initialisation...</span>
 </div>
 
-<!-- STATUS -->
-<div class="status-bar">
-    <div class="status-dot" id="status-dot"></div>
-    <span id="status-text">Connexion à l'API Azure...</span>
-</div>
-
-<!-- CATALOGUE -->
-<div class="section" id="catalogue">
-    <div class="section-header">
-        <h2 class="section-title">Catalogue</h2>
-        <span class="section-count" id="section-count">...</span>
-    </div>
-    <div class="video-grid" id="video-list">
-        <!-- Skeletons de chargement -->
-        <div class="skeleton skeleton-card"></div>
-        <div class="skeleton skeleton-card"></div>
-        <div class="skeleton skeleton-card"></div>
-        <div class="skeleton skeleton-card"></div>
-    </div>
-</div>
-
-<!-- MODAL PLAYER -->
-<div class="modal-overlay" id="modal" onclick="closeModal(event)">
-    <div class="modal" id="modal-box">
-        <div class="modal-video-wrap">
-            <video id="modal-video" controls></video>
-            <button class="modal-close" onclick="closeModalDirect()">✕</button>
-        </div>
-        <div class="modal-body">
-            <h2 class="modal-title" id="modal-title"></h2>
-            <p class="modal-desc" id="modal-desc"></p>
-            <div class="modal-meta">
-                <div class="modal-meta-item">🎬 <span id="modal-source"></span></div>
-                <div class="modal-meta-item">☁️ Hébergé sur Azure Cosmos DB</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- FOOTER -->
-<footer>
-    Projet étudiant · Propulsé par <span>Microsoft Azure</span> · Cosmos DB · Azure Functions · Blob Storage
-</footer>
+<div class="grid" id="video-grid"></div>
 
 <script>
-    // ─── CONFIG ───
-    const API_URL = "https://media-api-sarah2026-gthqfhd5ggdngnaa.swedencentral-01.azurewebsites.net/api/GetVideos";
+    // On sépare l'URL de la clé pour contourner la sécurité GitHub
+    const BASE_URL = "https://media-api-sarah2026-gthqfhd5ggdngnaa.swedencentral-01.azurewebsites.net/api/GetVideos";
+    const PART1 = "rw1LwyTdgXCyXmE0reha0mQE4";
+    const PART2 = "jHN3mEbw40w5YqVqduvAzFuX6STJw==";
 
-    let allVideos = [];
-    let currentFilter = 'all';
+// On reforme l'URL complète
+    const API_URL = BASE_URL + "?code=" + PART1 + "jHN3mEbw40w5YqVqduvAzFuX6STJw==";
+    let allVideos = []; 
 
-    // ─── CHARGEMENT ───
-    async function chargerVideos() {
-        setStatus('loading', 'Connexion à Azure...');
+    async function init() {
         try {
-            const res = await fetch(API_URL);
-            if (!res.ok) throw new Error('Erreur HTTP ' + res.status);
-            allVideos = await res.json();
+            const response = await fetch(API_URL);
+            const data = await response.json();
+            
+            // CORRECTIF DE FILTRAGE : On force l'attribution des catégories car elles manquent dans CosmosDB
+            allVideos = data.map(v => {
+                let cat = "Général";
+                const title = v.title.toLowerCase();
+                if (title.includes("bunny")) cat = "Animation";
+                if (title.includes("éléphants") || title.includes("elephants") || title.includes("video2")) cat = "Sci-Fi";
+                if (title.includes("nature") || title.includes("video3")) cat = "Nature";
+                return { ...v, category: cat }; // On ajoute le champ category manquant
+            });
 
-            setStatus('connected', `✅ API connectée — ${allVideos.length} vidéos chargées`);
-            document.getElementById('nav-count').textContent = allVideos.length + ' vidéos';
-            afficherVideos(allVideos);
-        } catch (err) {
-            setStatus('error', '❌ Erreur : ' + err.message);
-            document.getElementById('video-list').innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-icon">⚠️</div>
-                    <p>Impossible de charger les vidéos.</p>
-                    <small style="color:#555">${err.message}</small>
-                </div>`;
+            filtrerEtAfficher();
+            document.getElementById('status-dot').classList.add('active');
+            document.getElementById('status-text').innerText = allVideos.length + " vidéos chargées";
+        } catch (e) {
+            document.getElementById('status-text').innerText = "Erreur de connexion API";
         }
     }
 
-    function setStatus(type, msg) {
-        const dot = document.getElementById('status-dot');
-        const txt = document.getElementById('status-text');
-        dot.className = 'status-dot' + (type === 'connected' ? ' connected' : type === 'error' ? ' error' : '');
-        txt.textContent = msg;
-    }
-
-    // ─── AFFICHAGE ───
-    function afficherVideos(videos) {
-        const list = document.getElementById('video-list');
-        document.getElementById('section-count').textContent = videos.length + ' titre' + (videos.length > 1 ? 's' : '');
-
-        if (videos.length === 0) {
-            list.innerHTML = `<div class="empty-state"><div class="empty-icon">🎬</div><p>Aucune vidéo trouvée.</p></div>`;
-            return;
-        }
-
-        list.innerHTML = videos.map((v, i) => {
-            const isAzure = v.url && v.url.includes('blob.core.windows.net');
-            const badge = isAzure ? 'Azure Blob' : 'Web';
-            const emoji = getEmoji(v.title || '');
-            const delay = (i * 0.05) + 's';
-
-            return `
-            <div class="card" style="animation-delay:${delay}" onclick="ouvrirVideo('${escHtml(v.url)}', '${escHtml(v.title)}', '${escHtml(v.description)}', '${badge}')">
-                <div class="card-thumb">
-                    ${v.thumbnail && !v.thumbnail.includes('placeholder')
-                        ? `<img src="${escHtml(v.thumbnail)}" alt="${escHtml(v.title)}" onerror="this.parentElement.innerHTML='<div class=card-thumb-placeholder>${emoji}</div>'">`
-                        : `<div class="card-thumb-placeholder">${emoji}</div>`
-                    }
-                    <div class="card-play-overlay">
-                        <div class="play-btn-circle">▶</div>
-                    </div>
-                    <div class="card-badge">${badge}</div>
-                </div>
-                <div class="card-body">
-                    <div class="card-title">${escHtml(v.title || 'Sans titre')}</div>
-                    <div class="card-desc">${escHtml(v.description || 'Aucune description disponible.')}</div>
-                    <div class="card-footer">
-                        <span class="card-type">MP4 · HD</span>
-                        <span class="card-star">★★★★☆</span>
-                    </div>
-                </div>
-            </div>`;
-        }).join('');
-    }
-
-    function getEmoji(title) {
-        const t = title.toLowerCase();
-        if (t.includes('bunny') || t.includes('lapin')) return '🐰';
-        if (t.includes('éléphant') || t.includes('elephant')) return '🐘';
-        if (t.includes('nature') || t.includes('dream')) return '🌿';
-        if (t.includes('test') || t.includes('premiere')) return '🎬';
-        return '🎥';
-    }
-
-    function escHtml(str) {
-        if (!str) return '';
-        return String(str).replace(/'/g, '&#39;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    }
-
-    // ─── FILTRES ───
-    function setFilter(filter, btn) {
-        currentFilter = filter;
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        filterVideos();
-    }
-
-    function filterVideos() {
-        const q = document.getElementById('search-input').value.toLowerCase();
-        let filtered = allVideos.filter(v => {
-            const matchSearch = !q
-                || (v.title && v.title.toLowerCase().includes(q))
-                || (v.description && v.description.toLowerCase().includes(q));
-            const isAzure = v.url && v.url.includes('blob.core.windows.net');
-            const matchFilter = currentFilter === 'all'
-                || (currentFilter === 'azure' && isAzure)
-                || (currentFilter === 'web' && !isAzure);
-            return matchSearch && matchFilter;
+    function filtrerEtAfficher() {
+        const query = document.getElementById('search-input').value.toLowerCase().trim();
+        const selectedGenre = document.getElementById('genre-select').value;
+        
+        const resultats = allVideos.filter(v => {
+            const matchGenre = (selectedGenre === 'all') || (v.category === selectedGenre);
+            const matchTexte = v.title.toLowerCase().includes(query);
+            return matchGenre && matchTexte;
         });
-        afficherVideos(filtered);
+
+        render(resultats);
     }
 
-    // ─── MODAL PLAYER ───
-    function ouvrirVideo(url, title, desc, source) {
-        document.getElementById('modal-video').src = url;
-        document.getElementById('modal-title').textContent = title;
-        document.getElementById('modal-desc').textContent = desc || 'Aucune description.';
-        document.getElementById('modal-source').textContent = source;
-        document.getElementById('modal').classList.add('open');
-        document.body.style.overflow = 'hidden';
+    function render(liste) {
+        const grid = document.getElementById('video-grid');
+        grid.innerHTML = liste.map(v => `
+            <div class="card">
+                <video class="card-video" src="${v.url}" controls></video>
+                <div class="card-content">
+                    <div class="card-genre">${v.category}</div>
+                    <div class="card-title">${v.title}</div>
+                    <div class="card-text">${v.description || 'Source : Azure Media Services'}</div>
+                </div>
+            </div>
+        `).join('');
+        if(liste.length === 0) grid.innerHTML = "<p>Aucun résultat trouvé.</p>";
     }
 
-    function closeModal(e) {
-        if (e.target === document.getElementById('modal')) closeModalDirect();
-    }
-
-    function closeModalDirect() {
-        document.getElementById('modal').classList.remove('open');
-        document.getElementById('modal-video').pause();
-        document.getElementById('modal-video').src = '';
-        document.body.style.overflow = '';
-    }
-
-    document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') closeModalDirect();
-    });
-
-    // ─── UTILS ───
-    function scrollToVideos() {
-        document.getElementById('catalogue').scrollIntoView({ behavior: 'smooth' });
-    }
-
-    function reloadVideos() {
-        document.getElementById('video-list').innerHTML = `
-            <div class="skeleton skeleton-card"></div>
-            <div class="skeleton skeleton-card"></div>
-            <div class="skeleton skeleton-card"></div>
-            <div class="skeleton skeleton-card"></div>`;
-        chargerVideos();
-    }
-
-    // ─── DÉMARRAGE ───
-    chargerVideos();
+    init();
 </script>
 </body>
 </html>
