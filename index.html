@@ -12,43 +12,55 @@
         body { font-family: 'DM Sans', sans-serif; background: var(--black); color: var(--text); padding-bottom: 50px; min-height: 100vh; }
         nav { background: rgba(0,0,0,0.95); height: 70px; display: flex; align-items: center; justify-content: space-between; padding: 0 4vw; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #222; }
         .logo { font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; color: var(--red); letter-spacing: 2px; text-decoration: none; }
-        .auth-btn { background: var(--red); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .logo span { color: white; }
+        .auth-btn { background: var(--red); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .auth-btn:hover { background: #b20710; }
+        
+        /* Écran de connexion */
+        #login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; text-align: center; padding: 20px; }
+        #login-screen h2 { font-family: 'Bebas Neue', sans-serif; font-size: 3rem; color: var(--red); margin-bottom: 10px; }
+        #login-screen p { margin-bottom: 25px; color: #aaa; font-size: 1.1rem; }
+
+        /* Contenu Principal */
+        #main-content { display: none; }
         .hero-section { padding: 40px 4vw 20px; }
         .controls { display: flex; gap: 15px; flex-wrap: wrap; align-items: center; margin-top: 20px; }
-        .filter-select { flex: 1; min-width: 200px; padding: 14px; border-radius: 6px; border: 1px solid #333; background: #141414; color: white; outline: none; cursor: pointer; }
-        input { flex: 2; padding: 14px; border-radius: 6px; border: 1px solid #333; background: #141414; color: white; outline: none; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 30px; padding: 0 4vw; }
-        .card { background: var(--card); border-radius: 12px; overflow: hidden; border: 1px solid #222; }
+        .filter-select, input { padding: 14px; border-radius: 6px; border: 1px solid #333; background: #141414; color: white; outline: none; }
+        input { flex: 2; }
+        .filter-select { flex: 1; min-width: 200px; cursor: pointer; }
+
+        /* Grille Vidéo */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; padding: 0 4vw; margin-top: 30px; }
+        .card { background: var(--card); border-radius: 12px; overflow: hidden; border: 1px solid #222; transition: transform 0.3s; }
+        .card:hover { transform: scale(1.02); }
         .card-video { width: 100%; aspect-ratio: 16/9; background: #000; display: block; }
         .card-content { padding: 20px; }
         .card-genre { color: var(--red); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; }
         .card-title { font-size: 1.2rem; font-weight: bold; color: white; margin-bottom: 10px; }
+        
         .status { padding: 15px 4vw; font-size: 0.85rem; display: flex; align-items: center; gap: 12px; color: #888; }
         .dot { width: 10px; height: 10px; border-radius: 50%; background: #444; }
         .dot.active { background: #2ecc71; box-shadow: 0 0 10px #2ecc71; }
-        #login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; gap: 20px; }
-        #login-screen h2 { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: var(--red); }
-        #main-content { display: none; }
     </style>
 </head>
 <body>
 
 <nav>
     <a href="#" class="logo">STREAM<span>AZURE</span></a>
-    <button class="auth-btn" id="auth-btn" onclick="toggleAuth()">Connexion Microsoft SSO</button>
+    <button class="auth-btn" id="nav-auth-btn" onclick="toggleAuth()">Connexion</button>
 </nav>
 
 <div id="login-screen">
     <h2>Bienvenue sur StreamAzure</h2>
-    <p>Connectez-vous avec votre compte Microsoft pour accéder au catalogue.</p>
-    <button class="auth-btn" onclick="login()">Se connecter avec Microsoft</button>
+    <p>Identifiez-vous avec votre compte institutionnel pour accéder au catalogue sécurisé.</p>
+    <button class="auth-btn" style="font-size: 1.2rem; padding: 15px 30px;" onclick="login()">Se connecter avec Microsoft</button>
 </div>
 
 <div id="main-content">
     <div class="hero-section">
         <h1>Catalogue Vidéo <span style="color: var(--red);">Cloud</span></h1>
         <div class="controls">
-            <input type="text" id="search-input" placeholder="🔍 Rechercher..." oninput="filtrerEtAfficher()">
+            <input type="text" id="search-input" placeholder="🔍 Rechercher une vidéo..." oninput="filtrerEtAfficher()">
             <select id="genre-select" class="filter-select" onchange="filtrerEtAfficher()">
                 <option value="all">Toutes les catégories</option>
                 <option value="Animation">Animation</option>
@@ -60,7 +72,7 @@
 
     <div class="status">
         <div id="status-dot" class="dot"></div>
-        <span id="status-text">Initialisation...</span>
+        <span id="status-text">Vérification de la session...</span>
     </div>
 
     <div class="grid" id="video-grid"></div>
@@ -69,13 +81,11 @@
 <script>
     const API_URL = "https://media-api-sarah2026.azurewebsites.net/api/GetVideos";
 
-    // Configuration MSAL optimisée pour éviter "unauthorized_client"
     const msalConfig = {
         auth: {
-            clientId: "5b9eef7e-918e-4c84-970c-5be042939c38", 
-            authority: "https://login.microsoftonline.com/common", 
-            redirectUri: "https://sarah202411.github.io/Application-video-zero-code/",
-            navigateToLoginRequestUrl: true
+            clientId: "5b9eef7e-918e-4c84-970c-5be042939c38", // TON ID VALIDE
+            authority: "https://login.microsoftonline.com/common",
+            redirectUri: "https://sarah202411.github.io/Application-video-zero-code/"
         },
         cache: {
             cacheLocation: "localStorage",
@@ -90,48 +100,43 @@
         try {
             await msalInstance.initialize();
             
-            // On vérifie si on revient d'une redirection de connexion
+            // Gestion du retour de redirection
             const response = await msalInstance.handleRedirectPromise();
-            
             if (response) {
                 msalInstance.setActiveAccount(response.account);
             }
 
-            // On vérifie si un compte est déjà actif dans le cache
-            const currentAccounts = msalInstance.getAllAccounts();
-            if (currentAccounts.length > 0) {
-                msalInstance.setActiveAccount(currentAccounts[0]);
-                showApp(currentAccounts[0]);
+            // Vérification si un compte existe déjà
+            const accounts = msalInstance.getAllAccounts();
+            if (accounts.length > 0) {
+                msalInstance.setActiveAccount(accounts[0]);
+                showApp(accounts[0]);
             }
-        } catch (error) {
-            console.error("Erreur d'initialisation MSAL:", error);
+        } catch (err) {
+            console.error("Erreur d'initialisation:", err);
+            document.getElementById('status-text').innerText = "Erreur d'authentification.";
         }
     }
 
     async function login() {
-        try {
-            await msalInstance.loginRedirect({
-                scopes: ["openid", "profile", "User.Read"]
-            });
-        } catch (err) {
-            console.error(err);
-        }
+        await msalInstance.loginRedirect({
+            scopes: ["openid", "profile", "User.Read"]
+        });
     }
 
-    async function logout() {
-        await msalInstance.logoutRedirect();
+    function logout() {
+        msalInstance.logoutRedirect();
     }
 
     function toggleAuth() {
-        const account = msalInstance.getActiveAccount();
-        if (account) logout();
+        if (msalInstance.getActiveAccount()) logout();
         else login();
     }
 
     function showApp(account) {
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('main-content').style.display = 'block';
-        document.getElementById('auth-btn').innerText = `Déconnexion (${account.name || account.username})`;
+        document.getElementById('nav-auth-btn').innerText = `Déconnexion (${account.name.split(' ')[0]})`;
         loadVideos();
     }
 
@@ -139,7 +144,7 @@
         const statusText = document.getElementById('status-text');
         try {
             const response = await fetch(API_URL);
-            if (!response.ok) throw new Error("Erreur serveur");
+            if (!response.ok) throw new Error("API inaccessible");
             const data = await response.json();
             
             allVideos = data.map(v => {
@@ -153,16 +158,16 @@
 
             filtrerEtAfficher();
             document.getElementById('status-dot').classList.add('active');
-            statusText.innerText = allVideos.length + " vidéos chargées";
+            statusText.innerText = `${allVideos.length} vidéos disponibles`;
         } catch (e) {
-            statusText.innerText = "L'API ne répond pas. Vérifiez la configuration CORS sur Azure.";
-            console.error(e);
+            statusText.innerText = "Erreur : Impossible de charger les vidéos (Vérifiez CORS).";
         }
     }
 
     function filtrerEtAfficher() {
         const query = document.getElementById('search-input').value.toLowerCase().trim();
         const selectedGenre = document.getElementById('genre-select').value;
+        
         const resultats = allVideos.filter(v => {
             const matchGenre = (selectedGenre === 'all') || (v.category === selectedGenre);
             const matchTexte = (v.title || "").toLowerCase().includes(query);
@@ -175,18 +180,17 @@
         const grid = document.getElementById('video-grid');
         grid.innerHTML = liste.map(v => `
             <div class="card">
-                <video class="card-video" src="${v.url}" controls></video>
+                <video class="card-video" src="${v.url}" controls poster="https://via.placeholder.com/400x225/141414/e50914?text=StreamAzure"></video>
                 <div class="card-content">
                     <div class="card-genre">${v.category}</div>
-                    <div class="card-title">${v.title}</div>
-                    <p style="font-size: 0.8rem; color: #888;">Accès sécurisé Azure</p>
+                    <div class="card-title">${v.title || 'Vidéo Azure'}</div>
+                    <p style="font-size: 0.85rem; color: #888;">Contenu hébergé sur Azure Storage</p>
                 </div>
             </div>
         `).join('');
-        if (liste.length === 0) grid.innerHTML = "<p>Aucune vidéo trouvée.</p>";
+        if (liste.length === 0) grid.innerHTML = "<p style='grid-column: 1/-1; text-align: center;'>Aucune vidéo ne correspond à votre recherche.</p>";
     }
 
-    // Lancer l'initialisation au chargement
     initAuth();
 </script>
 </body>
