@@ -80,7 +80,7 @@
         <div class="hero-section">
             <h1>Catalogue Vidéo <span style="color: var(--red);">Cloud</span></h1>
             <div class="controls">
-                <input type="text" id="search-input" placeholder="🔍 Rechercher une vidéo..." oninput="filtrerEtAfficher()">
+                <input type="text" id="search-input" placeholder="🔍 Rechercher via Azure AI Search..." oninput="filtrerEtAfficher()">
                 <select id="genre-select" class="filter-select" onchange="filtrerEtAfficher()">
                     <option value="all">Toutes les catégories</option>
                     <option value="Animation">Animation</option>
@@ -91,7 +91,7 @@
         </div>
         <div class="status">
             <div id="status-dot" class="dot"></div>
-            <span id="status-text">Chargement...</span>
+            <span id="status-text">Prêt</span>
         </div>
         <div class="grid" id="video-grid"></div>
     </div>
@@ -120,6 +120,7 @@
 
 <script>
     const API_URL = "https://media-api-sarah2026.azurewebsites.net/api/GetVideos";
+    const SEARCH_API_URL = "https://media-api-sarah2026.azurewebsites.net/api/SearchVideos"; // Nouvelle URL pour AI Search
     const SAS_URL = "https://sarahmedia2026.blob.core.windows.net/uploads?sp=racwdli&st=2026-02-25T09:48:19Z&se=2027-02-25T18:03:19Z&sv=2024-11-04&sr=c&sig=wN9LEwRXvmGvS%2FYf2HgijNT03wJahYBv9xCNyDhGE4Q%3D";
     const VTT_PROXY = "https://media-api-sarah2026.azurewebsites.net/api/GetVtt?url=";
 
@@ -193,7 +194,6 @@
         btn.disabled = true;
         progressBar.style.display = 'block';
         status.innerText = 'Upload en cours...';
-        status.style.color = '#888';
 
         const fileName = Date.now() + '_' + selectedFile.name;
         const uploadUrl = SAS_URL.replace('?', '/' + fileName + '?');
@@ -210,56 +210,61 @@
 
         xhr.onload = () => {
             if (xhr.status === 201) {
-                status.innerText = '✅ Vidéo uploadée ! Power Automate va la traiter automatiquement.';
+                status.innerText = '✅ Succès ! Traitement Azure lancé.';
                 status.style.color = '#2ecc71';
-                progressFill.style.width = '100%';
-                document.getElementById('file-name').innerText = '';
-                selectedFile = null;
+                setTimeout(loadVideos, 3000);
             } else {
                 status.innerText = '❌ Erreur ' + xhr.status;
-                status.style.color = '#e50914';
             }
             btn.disabled = false;
         };
-
-        xhr.onerror = () => {
-            status.innerText = '❌ Erreur réseau.';
-            status.style.color = '#e50914';
-            btn.disabled = false;
-        };
-
         xhr.send(selectedFile);
     }
 
     async function loadVideos() {
         try {
             const response = await fetch(API_URL);
-            const data = await response.json();
-            allVideos = data.map(v => {
-                let cat = "Général";
-                const title = (v.title || "").toLowerCase();
-                if (title.includes("bunny")) cat = "Animation";
-                if (title.includes("elephants") || title.includes("video2")) cat = "Sci-Fi";
-                if (title.includes("nature") || title.includes("video3")) cat = "Nature";
-                return { ...v, category: cat };
-            });
-            filtrerEtAfficher();
+            allVideos = await response.json();
+            render(allVideos);
             document.getElementById('status-dot').classList.add('active');
-            document.getElementById('status-text').innerText = allVideos.length + " vidéos disponibles";
+            document.getElementById('status-text').innerText = allVideos.length + " vidéos chargées";
         } catch (e) {
-            document.getElementById('status-text').innerText = "Erreur de chargement.";
+            document.getElementById('status-text').innerText = "Erreur de connexion.";
         }
     }
 
-    function filtrerEtAfficher() {
-        const query = document.getElementById('search-input').value.toLowerCase().trim();
-        const selectedGenre = document.getElementById('genre-select').value;
-        const resultats = allVideos.filter(v => {
-            const matchGenre = (selectedGenre === 'all') || (v.category === selectedGenre);
-            const matchTexte = (v.title || "").toLowerCase().includes(query);
-            return matchGenre && matchTexte;
-        });
-        render(resultats);
+    // --- MODIFICATION ICI POUR AZURE AI SEARCH ---
+    async function filtrerEtAfficher() {
+        const query = document.getElementById('search-input').value.trim();
+        const genre = document.getElementById('genre-select').value;
+        const statusText = document.getElementById('status-text');
+
+        // Si la barre de recherche est vide et pas de filtre, on recharge tout le catalogue
+        if (query === "" && genre === "all") {
+            render(allVideos);
+            statusText.innerText = allVideos.length + " vidéos disponibles";
+            return;
+        }
+
+        try {
+            statusText.innerText = "🔍 Recherche intelligente...";
+            
+            // Appel à ton Azure Function qui contient la logique Azure AI Search
+            const response = await fetch(`${SEARCH_API_URL}?q=${encodeURIComponent(query)}&genre=${encodeURIComponent(genre)}`);
+            const searchResults = await response.json();
+            
+            render(searchResults);
+            statusText.innerText = searchResults.length + " résultat(s) trouvé(s) via AI Search";
+        } catch (e) {
+            console.error("Erreur Search:", e);
+            statusText.innerText = "Utilisation du filtre local (Search indisponible)";
+            // Fallback local si l'API Search échoue
+            const fallback = allVideos.filter(v => 
+                (genre === "all" || v.category === genre) && 
+                (v.title || "").toLowerCase().includes(query.toLowerCase())
+            );
+            render(fallback);
+        }
     }
 
     async function telechargerVtt(vttUrl) {
@@ -276,30 +281,23 @@
         const grid = document.getElementById('video-grid');
         grid.innerHTML = '';
         if (liste.length === 0) {
-            grid.innerHTML = "<p style='grid-column: 1/-1; text-align: center;'>Aucune vidéo trouvée.</p>";
+            grid.innerHTML = "<p style='grid-column: 1/-1; text-align: center;'>Aucun résultat.</p>";
             return;
         }
         liste.forEach(v => {
             const card = document.createElement('div');
             card.className = 'card';
-
-            const video = document.createElement('video');
-            video.className = 'card-video';
-            video.controls = true;
-            const source = document.createElement('source');
-            source.src = v.url;
-            video.appendChild(source);
-            card.appendChild(video);
-
-            const content = document.createElement('div');
-            content.className = 'card-content';
-            content.innerHTML = `
-                <div class="card-genre">${v.category}</div>
-                <div class="card-title">${v.title || 'Vidéo Azure'}</div>
-                <p style="font-size: 0.85rem; color: #888;">${v.description || 'Source : Azure Media Services'}</p>
-                ${v.vttUrl ? `<button class="download-btn" onclick="telechargerVtt('${v.vttUrl}')">📄 Télécharger la traduction</button>` : ''}
+            card.innerHTML = `
+                <video class="card-video" controls>
+                    <source src="${v.url}" type="video/mp4">
+                </video>
+                <div class="card-content">
+                    <div class="card-genre">${v.category || 'Général'}</div>
+                    <div class="card-title">${v.title || 'Vidéo Azure'}</div>
+                    <p style="font-size: 0.85rem; color: #888;">${v.description || 'Source : Azure Storage'}</p>
+                    ${v.vttUrl ? `<button class="download-btn" onclick="telechargerVtt('${v.vttUrl}')">📄 Télécharger la traduction</button>` : ''}
+                </div>
             `;
-            card.appendChild(content);
             grid.appendChild(card);
         });
     }
