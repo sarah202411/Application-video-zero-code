@@ -261,34 +261,19 @@
 
     function render(liste) {
         const grid = document.getElementById('video-grid');
-        grid.innerHTML = liste.map(v => {
-            // RÉPARATION DU LIEN VTT POUR GÉRER "ma_video.mp4.vtt"
-            let finalVttUrl = v.vttUrl;
-            if ((!finalVttUrl || finalVttUrl.includes('.vtt')) && v.url) {
-                // On force la construction du lien vers le dossier media-ready
-                // On prend l'URL de base et on ajoute simplement .vtt à la fin
-                finalVttUrl = v.url.replace('/uploads/', '/media-ready/') + '.vtt';
-            }
-
-            return `
-                <div class="card">
-                    <video class="card-video" controls crossorigin="anonymous">
-                        <source src="${v.url}" type="video/mp4">
-                        <track 
-                            kind="subtitles" 
-                            src="${finalVttUrl}" 
-                            srclang="fr" 
-                            label="Français" 
-                            default>
-                    </video>
-                    <div class="card-content">
-                        <div class="card-genre">${v.category}</div>
-                        <div class="card-title">${v.title || 'Vidéo Azure'}</div>
-                        <p style="font-size: 0.85rem; color: #888;">${v.description || 'Traduction automatique générée'}</p>
-                    </div>
+        grid.innerHTML = liste.map(v => `
+            <div class="card">
+                <video class="card-video" controls>
+                    <source src="${v.url}">
+                    ${v.vttUrl ? `<track kind="subtitles" src="${v.vttUrl}" srclang="fr" label="Français" default>` : ''}
+                </video>
+                <div class="card-content">
+                    <div class="card-genre">${v.category}</div>
+                    <div class="card-title">${v.title || 'Vidéo Azure'}</div>
+                    <p style="font-size: 0.85rem; color: #888;">${v.description || 'Source : Azure Media Services'}</p>
                 </div>
-            `;
-        }).join('');
+            </div>
+        `).join('');
         if (liste.length === 0) grid.innerHTML = "<p style='grid-column: 1/-1; text-align: center;'>Aucune vidéo trouvée.</p>";
     }
 
