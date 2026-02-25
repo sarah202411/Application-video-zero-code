@@ -52,8 +52,6 @@
         .progress-bar { width: 100%; background: #333; border-radius: 10px; height: 10px; margin-top: 15px; display: none; }
         .progress-fill { height: 100%; background: var(--red); border-radius: 10px; width: 0%; transition: width 0.3s; }
         .upload-status { margin-top: 15px; font-size: 0.9rem; color: #888; }
-        .download-btn { display: inline-block; margin-top: 10px; padding: 8px 16px; background: #333; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; text-decoration: none; transition: 0.2s; }
-        .download-btn:hover { background: #555; }
     </style>
 </head>
 <body>
@@ -75,7 +73,6 @@
 </div>
 
 <div id="main-content" style="display:none">
-
     <div id="page-catalogue" class="page active">
         <div class="hero-section">
             <h1>Catalogue Vidéo <span style="color: var(--red);">Cloud</span></h1>
@@ -86,6 +83,7 @@
                     <option value="Animation">Animation</option>
                     <option value="Sci-Fi">Science-Fiction</option>
                     <option value="Nature">Nature</option>
+                    <option value="Général">Général</option>
                 </select>
             </div>
         </div>
@@ -106,7 +104,6 @@
             <div class="upload-zone" onclick="document.getElementById('file-input').click()">
                 <div class="upload-icon">🎬</div>
                 <p>Cliquez pour sélectionner une vidéo</p>
-                <p style="color: #666; font-size: 0.85rem; margin-top: 8px;">MP4, AVI, MOV — Max 500MB</p>
                 <input type="file" id="file-input" accept="video/*" onchange="fileSelected(this)">
             </div>
             <div id="file-name" style="margin-top: 10px; color: #aaa; font-size: 0.9rem;"></div>
@@ -115,13 +112,11 @@
             <div class="upload-status" id="upload-status"></div>
         </div>
     </div>
-
 </div>
 
 <script>
     const API_URL = "https://media-api-sarah2026.azurewebsites.net/api/GetVideos";
     const SAS_URL = "https://sarahmedia2026.blob.core.windows.net/uploads?sp=racwdli&st=2026-02-25T09:48:19Z&se=2027-02-25T18:03:19Z&sv=2024-11-04&sr=c&sig=wN9LEwRXvmGvS%2FYf2HgijNT03wJahYBv9xCNyDhGE4Q%3D";
-    const VTT_PROXY = "https://media-api-sarah2026.azurewebsites.net/api/GetVtt?url=";
 
     const msalConfig = {
         auth: {
@@ -147,13 +142,8 @@
         }
     }
 
-    async function login() {
-        await msalInstance.loginRedirect({ scopes: ["openid", "profile", "User.Read"] });
-    }
-
-    function logout() {
-        msalInstance.logoutRedirect();
-    }
+    async function login() { await msalInstance.loginRedirect({ scopes: ["openid", "profile", "User.Read"] }); }
+    function logout() { msalInstance.logoutRedirect(); }
 
     function showPage(page, btn) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -193,7 +183,6 @@
         btn.disabled = true;
         progressBar.style.display = 'block';
         status.innerText = 'Upload en cours...';
-        status.style.color = '#888';
 
         const fileName = Date.now() + '_' + selectedFile.name;
         const uploadUrl = SAS_URL.replace('?', '/' + fileName + '?');
@@ -210,24 +199,12 @@
 
         xhr.onload = () => {
             if (xhr.status === 201) {
-                status.innerText = '✅ Vidéo uploadée ! Power Automate va la traiter automatiquement.';
+                status.innerText = '✅ Vidéo uploadée !';
                 status.style.color = '#2ecc71';
-                progressFill.style.width = '100%';
-                document.getElementById('file-name').innerText = '';
-                selectedFile = null;
-            } else {
-                status.innerText = '❌ Erreur ' + xhr.status;
-                status.style.color = '#e50914';
+                loadVideos();
             }
             btn.disabled = false;
         };
-
-        xhr.onerror = () => {
-            status.innerText = '❌ Erreur réseau.';
-            status.style.color = '#e50914';
-            btn.disabled = false;
-        };
-
         xhr.send(selectedFile);
     }
 
@@ -236,11 +213,16 @@
             const response = await fetch(API_URL);
             const data = await response.json();
             allVideos = data.map(v => {
-                let cat = "Général";
-                const title = (v.title || "").toLowerCase();
-                if (title.includes("bunny")) cat = "Animation";
-                if (title.includes("elephants") || title.includes("video2")) cat = "Sci-Fi";
-                if (title.includes("nature") || title.includes("video3")) cat = "Nature";
+                // PRIORITÉ À LA CATÉGORIE DÉFINIE DANS COSMOS DB
+                let cat = v.category; 
+                if (!cat) {
+                    const title = (v.title || "").toLowerCase();
+                    if (title.includes("bunny")) cat = "Animation";
+                    else if (title.includes("elephants") || title.includes("movie")) cat = "Animation";
+                    else if (title.includes("nature")) cat = "Nature";
+                    else if (title.includes("scifi") || title.includes("steel")) cat = "Sci-Fi";
+                    else cat = "Général";
+                }
                 return { ...v, category: cat };
             });
             filtrerEtAfficher();
@@ -262,46 +244,29 @@
         render(resultats);
     }
 
-    async function telechargerVtt(vttUrl) {
-        const response = await fetch(VTT_PROXY + encodeURIComponent(vttUrl));
-        const text = await response.text();
-        const blob = new Blob([text], { type: 'text/vtt' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'traduction.vtt';
-        a.click();
-    }
-
     function render(liste) {
         const grid = document.getElementById('video-grid');
-        grid.innerHTML = '';
-        if (liste.length === 0) {
-            grid.innerHTML = "<p style='grid-column: 1/-1; text-align: center;'>Aucune vidéo trouvée.</p>";
-            return;
-        }
-        liste.forEach(v => {
-            const card = document.createElement('div');
-            card.className = 'card';
+        grid.innerHTML = liste.map(v => {
+            // RÉPARATION DYNAMIQUE DU LIEN VTT (SI VIDE DANS COSMOS)
+            let trackUrl = v.vttUrl;
+            if (!trackUrl && v.url && v.url.includes('sarahmedia2026')) {
+                trackUrl = v.url.replace('/uploads/', '/media-ready/') + '.vtt';
+            }
 
-            const video = document.createElement('video');
-            video.className = 'card-video';
-            video.controls = true;
-            const source = document.createElement('source');
-            source.src = v.url;
-            video.appendChild(source);
-            card.appendChild(video);
-
-            const content = document.createElement('div');
-            content.className = 'card-content';
-            content.innerHTML = `
-                <div class="card-genre">${v.category}</div>
-                <div class="card-title">${v.title || 'Vidéo Azure'}</div>
-                <p style="font-size: 0.85rem; color: #888;">${v.description || 'Source : Azure Media Services'}</p>
-                ${v.vttUrl ? `<button class="download-btn" onclick="telechargerVtt('${v.vttUrl}')">📄 Télécharger la traduction</button>` : ''}
+            return `
+                <div class="card">
+                    <video class="card-video" controls crossorigin="anonymous">
+                        <source src="${v.url}" type="video/mp4">
+                        ${trackUrl ? `<track kind="subtitles" src="${trackUrl}" srclang="fr" label="Français" default>` : ''}
+                    </video>
+                    <div class="card-content">
+                        <div class="card-genre">${v.category}</div>
+                        <div class="card-title">${v.title || 'Vidéo Azure'}</div>
+                        <p style="font-size: 0.85rem; color: #888;">${v.description || 'Source : Azure Cloud'}</p>
+                    </div>
+                </div>
             `;
-            card.appendChild(content);
-            grid.appendChild(card);
-        });
+        }).join('');
     }
 
     initAuth();
