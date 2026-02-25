@@ -119,6 +119,7 @@
 <script>
     const API_URL = "https://media-api-sarah2026.azurewebsites.net/api/GetVideos";
     const SAS_URL = "https://sarahmedia2026.blob.core.windows.net/uploads?sp=racwdli&st=2026-02-25T09:48:19Z&se=2027-02-25T18:03:19Z&sv=2024-11-04&sr=c&sig=wN9LEwRXvmGvS%2FYf2HgijNT03wJahYBv9xCNyDhGE4Q%3D";
+    const VTT_PROXY = "https://media-api-sarah2026.azurewebsites.net/api/GetVtt?url=";
 
     const msalConfig = {
         auth: {
@@ -265,7 +266,7 @@
             <div class="card">
                 <video class="card-video" controls>
                     <source src="${v.url}">
-                    ${v.vttUrl ? `<track kind="subtitles" src="${v.vttUrl}" srclang="fr" label="Français" default>` : ''}
+                    ${v.vttUrl ? `<track kind="subtitles" src="${VTT_PROXY}${encodeURIComponent(v.vttUrl)}" srclang="fr" label="Français" default>` : ''}
                 </video>
                 <div class="card-content">
                     <div class="card-genre">${v.category}</div>
