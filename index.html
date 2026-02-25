@@ -262,20 +262,45 @@
 
     function render(liste) {
         const grid = document.getElementById('video-grid');
-        grid.innerHTML = liste.map(v => `
-            <div class="card">
-                <video class="card-video" controls>
-                    <source src="${v.url}">
-                    ${v.vttUrl ? `<track kind="subtitles" src="${VTT_PROXY}${encodeURIComponent(v.vttUrl)}" srclang="fr" label="Français" default>` : ''}
-                </video>
-                <div class="card-content">
-                    <div class="card-genre">${v.category}</div>
-                    <div class="card-title">${v.title || 'Vidéo Azure'}</div>
-                    <p style="font-size: 0.85rem; color: #888;">${v.description || 'Source : Azure Media Services'}</p>
-                </div>
-            </div>
-        `).join('');
-        if (liste.length === 0) grid.innerHTML = "<p style='grid-column: 1/-1; text-align: center;'>Aucune vidéo trouvée.</p>";
+        grid.innerHTML = '';
+        if (liste.length === 0) {
+            grid.innerHTML = "<p style='grid-column: 1/-1; text-align: center;'>Aucune vidéo trouvée.</p>";
+            return;
+        }
+        liste.forEach(v => {
+            const card = document.createElement('div');
+            card.className = 'card';
+
+            const video = document.createElement('video');
+            video.className = 'card-video';
+            video.controls = true;
+
+            const source = document.createElement('source');
+            source.src = v.url;
+            video.appendChild(source);
+
+            if (v.vttUrl) {
+                const track = document.createElement('track');
+                track.kind = 'subtitles';
+                track.src = VTT_PROXY + encodeURIComponent(v.vttUrl);
+                track.srclang = 'fr';
+                track.label = 'Français';
+                track.default = true;
+                video.appendChild(track);
+            }
+
+            const content = document.createElement('div');
+            content.className = 'card-content';
+            content.innerHTML = `
+                <div class="card-genre">${v.category}</div>
+                <div class="card-title">${v.title || 'Vidéo Azure'}</div>
+                <p style="font-size: 0.85rem; color: #888;">${v.description || 'Source : Azure Media Services'}</p>
+            `;
+
+            card.appendChild(video);
+            card.appendChild(content);
+            grid.appendChild(card);
+        });
     }
 
     initAuth();
