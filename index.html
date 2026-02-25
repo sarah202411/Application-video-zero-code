@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -20,6 +21,7 @@
         .auth-btn:hover { background: #b20710; }
         #login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; text-align: center; padding: 20px; }
         #login-screen h2 { font-family: 'Bebas Neue', sans-serif; font-size: 3rem; color: var(--red); margin-bottom: 10px; }
+        #login-screen p { margin-bottom: 25px; color: #aaa; font-size: 1.1rem; }
         .page { display: none; }
         .page.active { display: block; }
         .hero-section { padding: 40px 4vw 20px; }
@@ -39,8 +41,18 @@
         .dot.active { background: #2ecc71; box-shadow: 0 0 10px #2ecc71; }
         .profil-container { max-width: 600px; margin: 60px auto; padding: 40px; background: var(--card); border-radius: 16px; border: 1px solid #333; }
         .profil-avatar { width: 80px; height: 80px; border-radius: 50%; background: var(--red); display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; margin: 0 auto 20px; }
-        .upload-zone { border: 2px dashed #444; border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: 0.3s; }
-        .upload-btn { background: var(--red); color: white; border: none; padding: 12px 30px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 15px; width: 100%; }
+        .profil-name { text-align: center; font-size: 1.5rem; font-weight: bold; margin-bottom: 5px; }
+        .profil-email { text-align: center; color: #888; margin-bottom: 30px; }
+        .upload-zone { border: 2px dashed #444; border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: 0.3s; margin-top: 20px; }
+        .upload-zone:hover { border-color: var(--red); background: #1a1a1a; }
+        .upload-zone input[type="file"] { display: none; }
+        .upload-icon { font-size: 3rem; margin-bottom: 15px; }
+        .upload-btn { background: var(--red); color: white; border: none; padding: 12px 30px; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: bold; margin-top: 15px; width: 100%; transition: 0.3s; }
+        .upload-btn:hover { background: #b20710; }
+        .upload-btn:disabled { background: #444; cursor: not-allowed; }
+        .progress-bar { width: 100%; background: #333; border-radius: 10px; height: 10px; margin-top: 15px; display: none; }
+        .progress-fill { height: 100%; background: var(--red); border-radius: 10px; width: 0%; transition: width 0.3s; }
+        .upload-status { margin-top: 15px; font-size: 0.9rem; color: #888; }
     </style>
 </head>
 <body>
@@ -50,20 +62,21 @@
     <div class="nav-links" id="nav-links" style="display:none">
         <button class="nav-link active" onclick="showPage('catalogue', this)">🎬 Catalogue</button>
         <button class="nav-link" onclick="showPage('profil', this)">👤 Mon Profil</button>
-        <button class="auth-btn" onclick="logout()">Déconnexion</button>
+        <button class="auth-btn" id="nav-auth-btn" onclick="logout()">Déconnexion</button>
     </div>
     <button class="auth-btn" id="login-btn" onclick="login()">Connexion</button>
 </nav>
 
 <div id="login-screen">
     <h2>Bienvenue sur StreamAzure</h2>
-    <p>Connectez-vous pour accéder à vos contenus.</p>
-    <button class="auth-btn" onclick="login()">Se connecter avec Microsoft</button>
+    <p>Identifiez-vous avec votre compte Microsoft pour accéder au catalogue sécurisé.</p>
+    <button class="auth-btn" style="font-size: 1.2rem; padding: 15px 30px;" onclick="login()">Se connecter avec Microsoft</button>
 </div>
 
 <div id="main-content" style="display:none">
     <div id="page-catalogue" class="page active">
         <div class="hero-section">
+            <h1>Catalogue Vidéo <span style="color: var(--red);">Cloud</span></h1>
             <div class="controls">
                 <input type="text" id="search-input" placeholder="🔍 Rechercher une vidéo..." oninput="filtrerEtAfficher()">
                 <select id="genre-select" class="filter-select" onchange="filtrerEtAfficher()">
@@ -85,16 +98,19 @@
     <div id="page-profil" class="page">
         <div class="profil-container">
             <div class="profil-avatar" id="profil-avatar">?</div>
-            <div id="profil-name" style="text-align:center; font-weight:bold; font-size:1.5rem;">-</div>
-            <div id="profil-email" style="text-align:center; color:#888; margin-bottom:20px;">-</div>
-            <hr style="border: 1px solid #333; margin: 20px 0;">
+            <div class="profil-name" id="profil-name">-</div>
+            <div class="profil-email" id="profil-email">-</div>
+            <hr style="border-color: #333; margin: 20px 0;">
+            <h3 style="margin-bottom: 15px;">📤 Uploader une vidéo</h3>
             <div class="upload-zone" onclick="document.getElementById('file-input').click()">
-                <p>🎬 Cliquez pour choisir une vidéo</p>
-                <input type="file" id="file-input" accept="video/*" onchange="fileSelected(this)" style="display:none">
+                <div class="upload-icon">🎬</div>
+                <p>Cliquez pour sélectionner une vidéo</p>
+                <input type="file" id="file-input" accept="video/*" onchange="fileSelected(this)">
             </div>
-            <div id="file-name" style="margin-top: 10px; color: #888; text-align:center;"></div>
-            <button class="upload-btn" id="upload-btn" onclick="uploadVideo()" disabled>Lancer l'upload</button>
-            <div id="upload-status" style="margin-top:15px; text-align:center;"></div>
+            <div id="file-name" style="margin-top: 10px; color: #aaa; font-size: 0.9rem;"></div>
+            <button class="upload-btn" id="upload-btn" onclick="uploadVideo()" disabled>Uploader sur Azure</button>
+            <div class="progress-bar" id="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+            <div class="upload-status" id="upload-status"></div>
         </div>
     </div>
 </div>
@@ -108,7 +124,8 @@
             clientId: "5b9eef7e-918e-4c84-970c-5be042939c38",
             authority: "https://login.microsoftonline.com/common",
             redirectUri: "https://sarah202411.github.io/Application-video-zero-code/"
-        }
+        },
+        cache: { cacheLocation: "localStorage", storeAuthStateInCookie: true }
     };
 
     const msalInstance = new msal.PublicClientApplication(msalConfig);
@@ -118,6 +135,7 @@
     async function initAuth() {
         await msalInstance.initialize();
         const response = await msalInstance.handleRedirectPromise();
+        if (response) msalInstance.setActiveAccount(response.account);
         const accounts = msalInstance.getAllAccounts();
         if (accounts.length > 0) {
             msalInstance.setActiveAccount(accounts[0]);
@@ -125,7 +143,7 @@
         }
     }
 
-    async function login() { await msalInstance.loginRedirect({ scopes: ["User.Read"] }); }
+    async function login() { await msalInstance.loginRedirect({ scopes: ["openid", "profile", "User.Read"] }); }
     function logout() { msalInstance.logoutRedirect(); }
 
     function showPage(page, btn) {
@@ -137,11 +155,13 @@
 
     function showApp(account) {
         document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('login-btn').style.display = 'none';
         document.getElementById('main-content').style.display = 'block';
         document.getElementById('nav-links').style.display = 'flex';
-        document.getElementById('login-btn').style.display = 'none';
-        document.getElementById('profil-avatar').innerText = account.username.charAt(0).toUpperCase();
-        document.getElementById('profil-name').innerText = account.name || account.username;
+        const name = account.name || account.username;
+        document.getElementById('nav-auth-btn').innerText = `Déconnexion (${name.split(' ')[0]})`;
+        document.getElementById('profil-avatar').innerText = name.charAt(0).toUpperCase();
+        document.getElementById('profil-name').innerText = name;
         document.getElementById('profil-email').innerText = account.username;
         loadVideos();
     }
@@ -149,26 +169,42 @@
     function fileSelected(input) {
         selectedFile = input.files[0];
         if (selectedFile) {
-            document.getElementById('file-name').innerText = selectedFile.name;
+            document.getElementById('file-name').innerText = '📁 ' + selectedFile.name;
             document.getElementById('upload-btn').disabled = false;
         }
     }
 
     async function uploadVideo() {
+        if (!selectedFile) return;
         const btn = document.getElementById('upload-btn');
         const status = document.getElementById('upload-status');
+        const progressBar = document.getElementById('progress-bar');
+        const progressFill = document.getElementById('progress-fill');
+
         btn.disabled = true;
+        progressBar.style.display = 'block';
         status.innerText = 'Upload en cours...';
 
-        const uploadUrl = SAS_URL.replace('?', '/' + Date.now() + '_' + selectedFile.name + '?');
+        const fileName = Date.now() + '_' + selectedFile.name;
+        const uploadUrl = SAS_URL.replace('?', '/' + fileName + '?');
+
         const xhr = new XMLHttpRequest();
         xhr.open('PUT', uploadUrl, true);
         xhr.setRequestHeader('x-ms-blob-type', 'BlockBlob');
+        xhr.setRequestHeader('Content-Type', selectedFile.type);
+
+        xhr.upload.onprogress = (e) => {
+            const pct = Math.round((e.loaded / e.total) * 100);
+            progressFill.style.width = pct + '%';
+        };
+
         xhr.onload = () => {
             if (xhr.status === 201) {
-                status.innerText = '✅ Vidéo envoyée !';
+                status.innerText = '✅ Vidéo uploadée !';
+                status.style.color = '#2ecc71';
                 loadVideos();
             }
+            btn.disabled = false;
         };
         xhr.send(selectedFile);
     }
@@ -176,38 +212,62 @@
     async function loadVideos() {
         try {
             const response = await fetch(API_URL);
-            allVideos = await response.json();
+            const data = await response.json();
+            allVideos = data.map(v => {
+                // PRIORITÉ À LA CATÉGORIE DÉFINIE DANS COSMOS DB
+                let cat = v.category; 
+                if (!cat) {
+                    const title = (v.title || "").toLowerCase();
+                    if (title.includes("bunny")) cat = "Animation";
+                    else if (title.includes("elephants") || title.includes("movie")) cat = "Animation";
+                    else if (title.includes("nature")) cat = "Nature";
+                    else if (title.includes("scifi") || title.includes("steel")) cat = "Sci-Fi";
+                    else cat = "Général";
+                }
+                return { ...v, category: cat };
+            });
             filtrerEtAfficher();
             document.getElementById('status-dot').classList.add('active');
-            document.getElementById('status-text').innerText = `${allVideos.length} vidéos disponibles`;
-        } catch (e) { document.getElementById('status-text').innerText = "Erreur de connexion API."; }
+            document.getElementById('status-text').innerText = allVideos.length + " vidéos disponibles";
+        } catch (e) {
+            document.getElementById('status-text').innerText = "Erreur de chargement.";
+        }
     }
 
     function filtrerEtAfficher() {
-        const query = document.getElementById('search-input').value.toLowerCase();
-        const genre = document.getElementById('genre-select').value;
-        const filtered = allVideos.filter(v => {
-            const matchGenre = (genre === 'all' || v.category === genre);
+        const query = document.getElementById('search-input').value.toLowerCase().trim();
+        const selectedGenre = document.getElementById('genre-select').value;
+        const resultats = allVideos.filter(v => {
+            const matchGenre = (selectedGenre === 'all') || (v.category === selectedGenre);
             const matchTexte = (v.title || "").toLowerCase().includes(query);
             return matchGenre && matchTexte;
         });
-        render(filtered);
+        render(resultats);
     }
 
     function render(liste) {
-        document.getElementById('video-grid').innerHTML = liste.map(v => `
-            <div class="card">
-                <video class="card-video" controls crossorigin="anonymous">
-                    <source src="${v.url}" type="video/mp4">
-                    ${v.vttUrl ? `<track kind="subtitles" src="${v.vttUrl}" srclang="fr" label="Français" default>` : ''}
-                </video>
-                <div class="card-content">
-                    <div class="card-genre">${v.category || 'Général'}</div>
-                    <div class="card-title">${v.title || 'Sans titre'}</div>
-                    <p style="font-size: 0.85rem; color: #888;">${v.description || ''}</p>
+        const grid = document.getElementById('video-grid');
+        grid.innerHTML = liste.map(v => {
+            // RÉPARATION DYNAMIQUE DU LIEN VTT (SI VIDE DANS COSMOS)
+            let trackUrl = v.vttUrl;
+            if (!trackUrl && v.url && v.url.includes('sarahmedia2026')) {
+                trackUrl = v.url.replace('/uploads/', '/media-ready/') + '.vtt';
+            }
+
+            return `
+                <div class="card">
+                    <video class="card-video" controls crossorigin="anonymous">
+                        <source src="${v.url}" type="video/mp4">
+                        ${trackUrl ? `<track kind="subtitles" src="${trackUrl}" srclang="fr" label="Français" default>` : ''}
+                    </video>
+                    <div class="card-content">
+                        <div class="card-genre">${v.category}</div>
+                        <div class="card-title">${v.title || 'Vidéo Azure'}</div>
+                        <p style="font-size: 0.85rem; color: #888;">${v.description || 'Source : Azure Cloud'}</p>
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     }
 
     initAuth();
