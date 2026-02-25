@@ -207,13 +207,13 @@
 
         xhr.onload = () => {
             if (xhr.status === 201) {
-                status.innerText = '✅ Vidéo uploadée avec succès ! Power Automate va la traiter.';
+                status.innerText = '✅ Vidéo uploadée ! Power Automate va la traiter automatiquement.';
                 status.style.color = '#2ecc71';
                 progressFill.style.width = '100%';
                 document.getElementById('file-name').innerText = '';
                 selectedFile = null;
             } else {
-                status.innerText = '❌ Erreur ' + xhr.status + ' lors de l\'upload.';
+                status.innerText = '❌ Erreur ' + xhr.status;
                 status.style.color = '#e50914';
             }
             btn.disabled = false;
@@ -263,7 +263,10 @@
         const grid = document.getElementById('video-grid');
         grid.innerHTML = liste.map(v => `
             <div class="card">
-                <video class="card-video" src="${v.url}" controls></video>
+                <video class="card-video" controls>
+                    <source src="${v.url}">
+                    ${v.vttUrl ? `<track kind="subtitles" src="${v.vttUrl}" srclang="fr" label="Français" default>` : ''}
+                </video>
                 <div class="card-content">
                     <div class="card-genre">${v.category}</div>
                     <div class="card-title">${v.title || 'Vidéo Azure'}</div>
