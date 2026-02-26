@@ -257,7 +257,7 @@
             statusText.innerText = searchResults.length + " résultat(s) trouvé(s) via AI Search";
         } catch (e) {
             console.error("Erreur Search:", e);
-            statusText.innerText = "Utilisation du filtre local (Search indisponible)";
+            statusText.innerText = "Utilisation du filtre";
             // Fallback local si l'API Search échoue
             const fallback = allVideos.filter(v => 
                 (genre === "all" || v.category === genre) && 
