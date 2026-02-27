@@ -295,7 +295,7 @@
                     <div class="card-genre">${v.category || 'Général'}</div>
                     <div class="card-title">${v.title || 'Vidéo Azure'}</div>
                     <p style="font-size: 0.85rem; color: #888;">${v.description || 'Source : Azure Storage'}</p>
-                    ${v.vttUrl ? `<button class="download-btn" onclick="telechargerVtt('${v.vttUrl}')">📄 Télécharger la traduction</button>` : ''}
+                    ${v.vttUrl ? `<button class="download-btn" onclick="telechargerVtt('${v.vttUrl}')">📄 Télécharger les sous-titres</button>` : ''}
                 </div>
             `;
             grid.appendChild(card);
